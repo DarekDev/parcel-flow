@@ -15,7 +15,7 @@ class RequestNode(BaseNode):
     def __init__(self, node_id: str = "request"):
         super().__init__(node_id, requires=[], outputs=["request_data"])
     
-    def run(self, parcels: Dict[str, Parcel]) -> Dict[str, Any]:
+    def run(self, parcels: Dict[str, Parcel], index: int = None) -> Dict[str, Any]:
         # This node doesn't require any input parcels
         # It just passes through the request data
         return {"request_data": "Initial request received"}
@@ -27,7 +27,7 @@ class ValidateNode(BaseNode):
     def __init__(self, node_id: str = "validate"):
         super().__init__(node_id, requires=["request_data"], outputs=["validation_result"])
     
-    def run(self, parcels: Dict[str, Parcel]) -> Dict[str, Any]:
+    def run(self, parcels: Dict[str, Parcel], index: int = None) -> Dict[str, Any]:
         request_data = parcels["request_data"].value
         is_valid = len(str(request_data)) > 0
         
@@ -47,7 +47,7 @@ class TransformNode(BaseNode):
         super().__init__(node_id, requires=["validation_result"], outputs=["transformed_data"])
         self.operation = operation
     
-    def run(self, parcels: Dict[str, Parcel]) -> Dict[str, Any]:
+    def run(self, parcels: Dict[str, Parcel], index: int = None) -> Dict[str, Any]:
         validation = parcels["validation_result"].value
         
         if not validation["valid"]:
@@ -70,7 +70,7 @@ class LogNode(BaseNode):
     def __init__(self, node_id: str = "log"):
         super().__init__(node_id, requires=["request_data"], outputs=["log_entry"])
     
-    def run(self, parcels: Dict[str, Parcel]) -> Dict[str, Any]:
+    def run(self, parcels: Dict[str, Parcel], index: int = None) -> Dict[str, Any]:
         request_data = parcels["request_data"].value
         
         return {
@@ -95,7 +95,7 @@ class ArraySpreadNode(BaseNode):
         self.input_parcel = input_parcel
         self.output_prefix = output_prefix
     
-    def run(self, parcels: Dict[str, Parcel]) -> Dict[str, Any]:
+    def run(self, parcels: Dict[str, Parcel], index: int = None) -> Dict[str, Any]:
         input_data = parcels[self.input_parcel].value
         
         if not isinstance(input_data, list):
@@ -124,40 +124,39 @@ class ProcessItemNode(BaseNode):
     Processes individual array items.
     
     This node will run multiple times - once for each item in the array!
-    This demonstrates the reactive nature - no loops needed.
+    The engine calls this node once per index automatically.
+    
+    Key insight: Node just declares requires=["user"] (no index!).
+    The engine sees "user[0]", "user[1]", etc. and runs this node for each.
     """
     
     def __init__(self, node_id: str = "process_item", input_prefix: str = "user", output_prefix: str = "processed"):
-        super().__init__(node_id, requires=[f"{input_prefix}[0]"], outputs=[f"{output_prefix}[0]"])
+        # Note: We just declare the prefix, not specific indices!
+        super().__init__(node_id, requires=[input_prefix], outputs=[output_prefix])
         self.input_prefix = input_prefix
         self.output_prefix = output_prefix
     
-    def can_run(self, parcels: Dict[str, Parcel]) -> bool:
-        """Override to check for any matching input parcels."""
-        return any(
-            name.startswith(f"{self.input_prefix}[") and name.endswith("]")
-            for name in parcels.keys()
-        )
-    
-    def run(self, parcels: Dict[str, Parcel]) -> Dict[str, Any]:
-        # Find all matching input parcels
-        matching_parcels = {}
-        for name, parcel in parcels.items():
-            if name.startswith(f"{self.input_prefix}[") and name.endswith("]"):
-                matching_parcels[name] = parcel
+    def run(self, parcels: Dict[str, Parcel], index: int = None) -> Dict[str, Any]:
+        """
+        Process a single array item.
         
-        # Process each matching parcel
-        results = {}
-        for name, parcel in matching_parcels.items():
-            # Extract index from parcel name
-            index = name[len(f"{self.input_prefix}["):-1]
-            output_name = f"{self.output_prefix}[{index}]"
-            
-            # Process the item
-            processed_value = self._process_item(parcel.value)
-            results[output_name] = processed_value
+        The engine passes the index, so we know which item to process.
+        """
+        if index is None:
+            raise ValueError("ProcessItemNode requires an index to run")
         
-        return results
+        # Get the specific indexed parcel
+        parcel_name = f"{self.input_prefix}[{index}]"
+        if parcel_name not in parcels:
+            raise ValueError(f"Expected parcel '{parcel_name}' not found")
+        
+        # Process the item
+        item_value = parcels[parcel_name].value
+        processed_value = self._process_item(item_value)
+        
+        # Return with indexed output name
+        output_name = f"{self.output_prefix}[{index}]"
+        return {output_name: processed_value}
     
     def _process_item(self, item: Any) -> Any:
         """Process a single item - can be overridden for different processing logic."""
@@ -168,35 +167,60 @@ class ProcessItemNode(BaseNode):
 
 
 class CollectNode(BaseNode):
-    """Collects processed items back into a single array."""
+    """
+    Collects processed items back into a single array.
     
-    def __init__(self, node_id: str = "collect", input_prefix: str = "processed", output_name: str = "result"):
-        super().__init__(node_id, requires=[f"{input_prefix}[0]"], outputs=[output_name])
+    Key insight: Requires the metadata parcel to know how many items to expect.
+    Only runs when ALL indexed parcels are available.
+    """
+    
+    def __init__(self, node_id: str = "collect", input_prefix: str = "processed", 
+                 output_name: str = "result", meta_parcel: str = "user_meta"):
+        # Require the metadata to know array length
+        super().__init__(node_id, requires=[meta_parcel], outputs=[output_name])
         self.input_prefix = input_prefix
         self.output_name = output_name
+        self.meta_parcel = meta_parcel
     
     def can_run(self, parcels: Dict[str, Parcel]) -> bool:
-        """Override to check for any matching input parcels."""
-        return any(
-            name.startswith(f"{self.input_prefix}[") and name.endswith("]")
-            for name in parcels.keys()
-        )
+        """
+        Override to check if all indexed items are available.
+        
+        We need the metadata to know the expected count, and all indexed parcels must exist.
+        """
+        # First check base requirements (metadata)
+        if not super().can_run(parcels):
+            return False
+        
+        # Get metadata to know how many items to expect
+        meta_parcel_name = self.requires[0]  # Should be "user_meta" or similar
+        if meta_parcel_name not in parcels:
+            return False
+        
+        metadata = parcels[meta_parcel_name].value
+        expected_length = metadata.get("length", 0)
+        
+        # Check if all indexed parcels exist
+        for i in range(expected_length):
+            indexed_name = f"{self.input_prefix}[{i}]"
+            if indexed_name not in parcels:
+                return False
+        
+        return True
     
-    def run(self, parcels: Dict[str, Parcel]) -> Dict[str, Any]:
-        # Find all matching input parcels
-        matching_parcels = {}
-        for name, parcel in parcels.items():
-            if name.startswith(f"{self.input_prefix}[") and name.endswith("]"):
-                matching_parcels[name] = parcel
+    def run(self, parcels: Dict[str, Parcel], index: int = None) -> Dict[str, Any]:
+        """Collect all indexed parcels into a single array."""
+        # Get metadata to know array length
+        meta_parcel_name = self.requires[0]
+        metadata = parcels[meta_parcel_name].value
+        expected_length = metadata.get("length", 0)
         
-        # Sort by index and collect values
-        sorted_items = []
-        for name, parcel in matching_parcels.items():
-            index = int(name[len(f"{self.input_prefix}["):-1])
-            sorted_items.append((index, parcel.value))
-        
-        sorted_items.sort(key=lambda x: x[0])
-        result = [item[1] for item in sorted_items]
+        # Collect all indexed parcels in order
+        result = []
+        for i in range(expected_length):
+            indexed_name = f"{self.input_prefix}[{i}]"
+            if indexed_name in parcels:
+                result.append(parcels[indexed_name].value)
         
         return {self.output_name: result}
 
@@ -208,7 +232,7 @@ class ResponseNode(BaseNode):
         super().__init__(node_id, requires=[input_parcel], outputs=["response"])
         self.input_parcel = input_parcel
     
-    def run(self, parcels: Dict[str, Parcel]) -> Dict[str, Any]:
+    def run(self, parcels: Dict[str, Parcel], index: int = None) -> Dict[str, Any]:
         data = parcels[self.input_parcel].value
         
         return {

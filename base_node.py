@@ -33,22 +33,23 @@ class BaseNode(ABC):
         return {name: parcels[name] for name in self.requires if name in parcels}
     
     @abstractmethod
-    def run(self, parcels: Dict[str, Parcel]) -> Dict[str, Any]:
+    def run(self, parcels: Dict[str, Parcel], index: Optional[int] = None) -> Dict[str, Any]:
         """
         Execute this node's logic.
         
         Args:
             parcels: All available parcels (node will use only what it needs)
+            index: Optional index for array processing (e.g., process item 0, 1, 2...)
             
         Returns:
             Dictionary mapping output parcel names to their values
         """
         pass
     
-    def run_safe(self, parcels: Dict[str, Parcel]) -> Dict[str, Any]:
+    def run_safe(self, parcels: Dict[str, Parcel], index: Optional[int] = None) -> Dict[str, Any]:
         """Run the node with error handling."""
         try:
-            return self.run(parcels)
+            return self.run(parcels, index)
         except Exception as e:
             return {f"error_{self.node_id}": {
                 "error": str(e),

@@ -61,7 +61,7 @@ def create_array_workflow() -> List[BaseNode]:
         RequestNode("request"),
         ArraySpreadNode("array_spread", "request_data", "user"),
         ProcessItemNode("process_item", "user", "processed"),
-        CollectNode("collect", "processed", "result"),
+        CollectNode("collect", "processed", "result", "user_meta"),
         ResponseNode("response", "result")
     ]
 

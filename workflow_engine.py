@@ -51,8 +51,9 @@ class WorkflowEngine:
             # Check each node to see if it can run
             for node in nodes:
                 if self._can_node_run(node):
-                    self._run_node(node)
-                    nodes_ran += 1
+                    did_run = self._run_node(node)
+                    if did_run:
+                        nodes_ran += 1
             
             # If no nodes ran, we're done
             if nodes_ran == 0:
@@ -65,38 +66,103 @@ class WorkflowEngine:
         return self.parcels
     
     def _can_node_run(self, node: BaseNode) -> bool:
-        """Check if a node can run and hasn't already run."""
-        if not node.can_run(self.parcels):
-            return False
+        """
+        Check if a node can run and hasn't already run.
         
-        # Check if node has already produced its outputs
-        has_outputs = any(output in self.parcels for output in node.outputs)
-        if has_outputs:
+        A node can run if:
+        1. All required parcels exist (either exact match or indexed versions)
+        2. It hasn't already produced non-indexed outputs
+        """
+        # Check if all required parcels are available (exact or indexed)
+        for required in node.requires:
+            # Check for exact match
+            if required in self.parcels:
+                continue
+            
+            # Check for indexed versions
+            has_indexed = any(
+                name.startswith(f"{required}[") and name.endswith("]")
+                for name in self.parcels.keys()
+            )
+            
+            if not has_indexed:
+                return False
+        
+        # Check if node has already produced its outputs (for non-indexed outputs)
+        # For indexed outputs, we check per-index later
+        has_non_indexed_outputs = any(
+            output in self.parcels 
+            for output in node.outputs 
+            if '[' not in output
+        )
+        if has_non_indexed_outputs:
             return False
         
         return True
     
-    def _run_node(self, node: BaseNode):
-        """Run a single node and add its outputs to the parcel queue."""
-        self._log(f"🔄 Running {node}")
+    def _run_node(self, node: BaseNode) -> bool:
+        """
+        Run a single node and add its outputs to the parcel queue.
         
-        # Get the parcels this node needs
-        required_parcels = node.get_required_parcels(self.parcels)
-        self._log(f"   📥 Input parcels: {list(required_parcels.keys())}")
+        Returns:
+            True if the node actually ran and produced outputs, False otherwise
+        """
+        # Check for indexed parcels that match node requirements
+        indexed_matches = self._get_indexed_matches(node.requires, self.parcels)
         
-        # Run the node
-        outputs = node.run_safe(self.parcels)
+        did_produce_outputs = False
         
-        # Add outputs to parcel queue
-        for output_name, output_value in outputs.items():
-            parcel = Parcel(
-                name=output_name,
-                value=output_value,
-                timestamp=time.time(),
-                node_id=node.node_id
-            )
-            self.parcels[output_name] = parcel
-            self._log(f"   📤 Created parcel: {parcel}")
+        if indexed_matches:
+            # Run node once for each index
+            for index in indexed_matches:
+                # Check if this index already produced outputs
+                has_produced_for_index = any(
+                    f"{output}[{index}]" in self.parcels 
+                    for output in node.outputs
+                )
+                if has_produced_for_index:
+                    continue
+                
+                self._log(f"🔄 Running {node} for index [{index}]")
+                
+                # Run the node with specific index
+                outputs = node.run_safe(self.parcels, index)
+                
+                # Add outputs to parcel queue
+                for output_name, output_value in outputs.items():
+                    parcel = Parcel(
+                        name=output_name,
+                        value=output_value,
+                        timestamp=time.time(),
+                        node_id=node.node_id
+                    )
+                    self.parcels[output_name] = parcel
+                    self._log(f"   📤 Created parcel: {parcel}")
+                    did_produce_outputs = True
+        else:
+            # Run normally (no indexing)
+            self._log(f"🔄 Running {node}")
+            
+            # Get the parcels this node needs
+            required_parcels = node.get_required_parcels(self.parcels)
+            self._log(f"   📥 Input parcels: {list(required_parcels.keys())}")
+            
+            # Run the node
+            outputs = node.run_safe(self.parcels)
+            
+            # Add outputs to parcel queue
+            for output_name, output_value in outputs.items():
+                parcel = Parcel(
+                    name=output_name,
+                    value=output_value,
+                    timestamp=time.time(),
+                    node_id=node.node_id
+                )
+                self.parcels[output_name] = parcel
+                self._log(f"   📤 Created parcel: {parcel}")
+                did_produce_outputs = True
+        
+        return did_produce_outputs
     
     def _log(self, message: str):
         """Add a message to the execution log."""
@@ -106,6 +172,35 @@ class WorkflowEngine:
     def get_execution_log(self) -> List[str]:
         """Get the complete execution log."""
         return self.execution_log
+    
+    def _get_indexed_matches(self, requires: List[str], parcels: Dict[str, Parcel]) -> List[int]:
+        """
+        Find indexed parcels that match the required parcel names.
+        
+        Example: If node requires ["user"] and parcels contain "user[0]", "user[1]", "user[2]",
+        this returns [0, 1, 2].
+        """
+        indices = set()
+        
+        for required in requires:
+            # Skip if the exact parcel exists (not indexed)
+            if required in parcels:
+                continue
+            
+            # Look for indexed versions
+            for parcel_name in parcels.keys():
+                # Match pattern: required_name[index]
+                if parcel_name.startswith(f"{required}[") and parcel_name.endswith("]"):
+                    try:
+                        # Extract the index
+                        index_str = parcel_name[len(required)+1:-1]
+                        index = int(index_str)
+                        indices.add(index)
+                    except ValueError:
+                        # Not a valid integer index, skip
+                        continue
+        
+        return sorted(list(indices))
     
     def print_parcels(self):
         """Print all current parcels in a nice format."""
