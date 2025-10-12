@@ -1,6 +1,6 @@
 # ParcelFlow - Minimal Example
 
-A didactic demonstration of **ParcelFlow**, a parcel-based reactive workflow execution paradigm that enables natural parallelism without complex orchestration.
+A minimal implementation of **ParcelFlow**, a parcel-based reactive workflow execution paradigm that enables natural parallelism without complex orchestration.
 
 ## 🎯 Core Concept
 
@@ -70,16 +70,14 @@ Output: user[0], user[1], user[2]
 
 Then **ProcessItemNode** runs **multiple times** - once for each parcel - without any explicit loops or coordination. This is the essence of reactive data flow!
 
-## 🎓 Educational Value
+## 🎓 What This Shows
 
-This example clearly shows:
+This example demonstrates:
 
 1. **Data-driven execution** - nodes run when data is available
 2. **Natural parallelism** - no complex orchestration needed
 3. **Reactive programming** - no static control flow
 4. **Scalable processing** - arrays become parallel work automatically
-
-Perfect for understanding the paradigm before implementing in larger systems!
 
 ## 📖 About
 
@@ -96,4 +94,4 @@ MIT License - feel free to use this code for learning, research, or commercial p
 
 ## 🤝 Contributing
 
-Contributions welcome! This is an educational example, so clarity and simplicity are priorities.
+Contributions welcome! Clarity and simplicity are key priorities for this implementation.
