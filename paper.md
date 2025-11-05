@@ -35,7 +35,7 @@ A separate production deployment (TypeScript, currently undergoing case study ev
 
 Existing workflow systems fall into two categories, both with drawbacks for specific use cases:
 
-1. **Heavyweight orchestrators** (Airflow, Prefect) provide production-grade features but require explicit dependency graphs, significant operational overhead, and weeks of learning curve. Array processing requires either dynamic DAG generation or explicit loops within nodes, mixing orchestration concerns with business logic. Their complexity makes them impractical for teaching workflow concepts or rapid prototyping.
+1. **Heavyweight orchestrators** (Airflow [@airflow], Prefect [@prefect]) provide production-grade features but require explicit dependency graphs, significant operational overhead, and weeks of learning curve. Array processing requires either dynamic DAG generation or explicit loops within nodes, mixing orchestration concerns with business logic. Their complexity makes them impractical for teaching workflow concepts or rapid prototyping.
 
 2. **End-user automation platforms** (Zapier, Make) are designed for non-programmers connecting pre-built integrations. While simple for their target use case, they lack the programmability and extensibility developers need for custom data transformations or experimental workflow research.
 
@@ -164,13 +164,13 @@ The minimal codebase makes ParcelFlow an ideal platform for teaching these conce
 
 # Comparison with Related Work
 
-**Scientific workflow systems** like Nextflow [@ditommaso2017nextflow], Snakemake [@koster2012snakemake], and CWL [@amstutz2016common] provide scatter/gather for array processing but require explicit declarations. ParcelFlow's pattern matching is implicit and automatic.
+**Scientific workflow systems** like Nextflow [@ditommaso2017nextflow], Snakemake [@koster2012snakemake], CWL [@amstutz2016common], Swift/T [@wozniak2013swift], and Pegasus [@deelman2015pegasus] provide scatter/gather for array processing but require explicit declarations. ParcelFlow's pattern matching is implicit and automatic.
 
-**DAG orchestrators** like Airflow and Prefect require explicit dependency graphs. ParcelFlow lets structure emerge from data availability, reducing cognitive load for simple workflows.
+**DAG orchestrators** like Airflow [@airflow] and Prefect [@prefect] require explicit dependency graphs. ParcelFlow lets structure emerge from data availability, reducing cognitive load for simple workflows.
 
-**Dataflow systems** like Apache Beam target large-scale distributed processing. ParcelFlow prioritizes simplicity for SME-scale workflows (10-100 items) over massive parallelism (TB+ datasets).
+**Dataflow systems** like Apache Beam [@beam] target large-scale distributed processing. ParcelFlow prioritizes simplicity for SME-scale workflows (10-100 items) over massive parallelism (TB+ datasets).
 
-**Reactive streams** like RxJS use push-based observable streams for continuous data. ParcelFlow uses pull-based discrete steps for batch-oriented tasks.
+**Reactive streams** like RxJS [@rxjs] use push-based observable streams for continuous data. ParcelFlow uses pull-based discrete steps for batch-oriented tasks.
 
 # Usage Examples
 
