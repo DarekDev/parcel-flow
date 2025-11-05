@@ -224,7 +224,7 @@ python benchmark_workflow.py
 
 ## Documentation
 
-- **[Research Paper](research-paper/parcelflow-paper.tex)** - Formal description and evaluation
+Full documentation coming soon.
 
 ## Limitations
 
