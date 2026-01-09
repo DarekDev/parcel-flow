@@ -28,7 +28,7 @@ The software demonstrates core orchestration patterns—specifically **data-driv
 ## The Educational Gap
 
 Teaching workflow orchestration and distributed computing concepts presents a specific challenge:
-1.  **Production tools are too complex**: Systems like Apache Airflow \citep{airflow} or Prefect \citep{prefect} require significant infrastructure (databases, message queues), complex configuration, and steep learning curves. Students spend more time debugging environments than learning concepts.
+1.  **Production tools are too complex**: Systems like Apache Airflow \citep{airflow} or Prefect \citep{prefect} require significant infrastructure (databases, message queues), complex configuration, and steep learning curves. While scientific workflow systems like Nextflow [@ditommaso2017nextflow] and Swift/T [@wozniak2013swift] handle massive parallelism effectively, they are designed for high-performance computing (HPC) environments. Conversely, industry standard orchestrators like Apache Airflow [@airflow] and Prefect [@prefect] focus on production reliability. Both categories require significant infrastructure.
 2.  **Toy examples are too abstract**: Pseudocode or simple scripts fail to demonstrate the real challenges of state management, dependency resolution, and execution semantics in a graph.
 
 Educators need a **"middle ground" tool**: a functioning, executable workflow engine that is simple enough to be studied as a "white box" but complex enough to exhibit real orchestration behaviors (DAG resolution, parallelism, error propagation).
@@ -52,7 +52,7 @@ ParcelFlow is designed to support a "Systems & Architecture" module where studen
 
 # Comparison with Existing Tools
 
-| Feature | Apache Airflow / Prefect | Common Workflow Language (CWL) | **ParcelFlow** |
+| Feature | Apache Airflow [@airflow] / Prefect [@prefect] | Common Workflow Language (CWL) [@amstutz2016common] | **ParcelFlow** |
 | :--- | :--- | :--- | :--- |
 | **Primary Goal** | Production Reliability | Interoperability/Reproducibility | **Education & Prototyping** |
 | **Setup Time** | Hours (DB, Queue, Worker) | Minutes (Runner installation) | **Seconds (Zero dependencies)** |
