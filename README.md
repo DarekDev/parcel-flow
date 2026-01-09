@@ -16,6 +16,8 @@ After completing the included laboratory modules, students will be able to:
 3.  **Debug** dependency graphs by identifying cyclic dependencies and missing data requirements.
 4.  **Critique** the trade-offs between implicit (emergent) and explicit (DAG-defined) orchestration.
 
+    > *Note: When a node requires multiple arrays (e.g., `user` and `location`), the engine applies a **Zip strategy** (matching index `i` to `i`), executing `min(len(inputs))` times.*
+
 ## 👨‍🏫 Instructor Guide
 
 -   **Target Audience**: Undergraduate/Graduate Computer Science students in "Distributed Systems", "Cloud Computing", or "Software Architecture" courses.
