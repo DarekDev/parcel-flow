@@ -1,12 +1,11 @@
 ---
-title: 'ParcelFlow: A Minimal Data-Driven Workflow Engine for Teaching and Prototyping'
+title: 'ParcelFlow: A Minimalist, Reactive Workflow Engine for Teaching Orchestration Concepts'
 tags:
   - Python
   - workflow orchestration
+  - educational tool
   - data-driven execution
-  - reactive systems
-  - array processing
-  - workflow engine
+  - scatter-gather pattern
 authors:
   - name: Dariusz Młodnicki
     orcid: 0009-0001-5634-393X
@@ -20,213 +19,85 @@ bibliography: paper.bib
 
 # Summary
 
-ParcelFlow is a **reference implementation** of a data-driven workflow execution engine designed for teaching and research. The 547-line Python implementation demonstrates automatic array processing through pattern matching—nodes declare required data (e.g., `requires=["user"]`) and automatically execute once per array element (`user[0]`, `user[1]`, etc.) without explicit loops.
+ParcelFlow is a **minimalist reference implementation** of a data-driven workflow engine, designed specifically as an educational resource for teaching orchestration concepts. Unlike production engines that prioritize scale and fault tolerance, ParcelFlow prioritizes **readability and conceptual clarity**. The entire core engine is implemented in under 600 lines of plain Python, allowing students to read, understand, and modify the internal logic of a workflow scheduler in a single lab session.
 
-The implementation prioritizes **conceptual clarity over production features**. Rather than providing production-ready workflow orchestration, ParcelFlow serves as:
-1. A teaching tool for workflow concepts (entire engine readable in hours)
-2. A research platform for experimenting with execution models (zero dependencies = easy to modify)
-3. A reference for understanding data-driven execution semantics
-
-A separate production deployment (TypeScript, currently undergoing case study evaluation at Key Search AG) validates that the paradigm scales beyond the reference implementation, but the Python version published here is explicitly designed for educational and research purposes.
+The software demonstrates core orchestration patterns—specifically **data-driven execution** (where tasks run automatically when inputs are available) and **implicit scatter/gather** (automatic array processing)—without the complexity of infrastructure setup or heavy frameworks.
 
 # Statement of Need
 
-## The Problem
+## The Educational Gap
 
-Existing workflow systems fall into two categories, both with drawbacks for specific use cases:
+Teaching workflow orchestration and distributed computing concepts presents a specific challenge:
+1.  **Production tools are too complex**: Systems like Apache Airflow \citep{airflow} or Prefect \citep{prefect} require significant infrastructure (databases, message queues), complex configuration, and steep learning curves. Students spend more time debugging environments than learning concepts.
+2.  **Toy examples are too abstract**: Pseudocode or simple scripts fail to demonstrate the real challenges of state management, dependency resolution, and execution semantics in a graph.
 
-1. **Heavyweight orchestrators** (Airflow [@airflow], Prefect [@prefect]) provide production-grade features but require explicit dependency graphs, significant operational overhead, and weeks of learning curve. Array processing requires either dynamic DAG generation or explicit loops within nodes, mixing orchestration concerns with business logic. Their complexity makes them impractical for teaching workflow concepts or rapid prototyping.
+Educators need a **"middle ground" tool**: a functioning, executable workflow engine that is simple enough to be studied as a "white box" but complex enough to exhibit real orchestration behaviors (DAG resolution, parallelism, error propagation).
 
-2. **End-user automation platforms** (Zapier, Make) are designed for non-programmers connecting pre-built integrations. While simple for their target use case, they lack the programmability and extensibility developers need for custom data transformations or experimental workflow research.
+## A "Glass Box" for Orchestration
 
-Neither category serves the need for a **simple, programmable workflow engine** suitable for education and research—one that developers can understand completely, modify easily, and use for prototyping without infrastructure setup.
+ParcelFlow fills this gap by providing a **transparent implementation** of standard workflow patterns. It serves as a laboratory bench where students can:
+1.  **Observe** how a scheduler traverses a dependency graph (by logging internal engine state).
+2.  **Experiment** with execution semantics (e.g., "What happens if I change the matching logic from exact-match to regex?").
+3.  **Implement** missing features as effective learning exercises (e.g., "Add a retry mechanism to the base node").
 
-## The Gap ParcelFlow Fills
+The novelty of ParcelFlow lies not in a new computational paradigm, but in its **pedagogical design**: stripping away all non-essential production features (persistence, distributed workers, authentication) to expose the core logic of reactive orchestration in its simplest functional form.
 
-ParcelFlow provides working, executable software (not a design pattern) for specific use cases:
+# Learning Objectives
 
-**For educators:**
-- Need a **complete, runnable workflow system** to demonstrate concepts in lectures
-- Students can execute actual workflows, not pseudocode
-- Can modify and extend the engine as lab exercises
-- Example: Assign students to implement custom scheduling algorithms by modifying `workflow_engine.py`
+ParcelFlow is designed to support a "Systems & Architecture" module where students:
+1.  **Differentiate** between Control-Flow (scripted) and Data-Flow (reactive) execution models.
+2.  **Implement** the "Scatter/Gather" pattern, understanding how single-item logic scales to arrays without explicit loops.
+3.  **Debug** dependency graphs, identifying cycles and "dead" branches where data is never produced.
+4.  **Critique** scheduler designs, comparing the trade-offs of eager vs. lazy execution.
 
-**For researchers:**
-- Need a **functioning baseline implementation** to compare alternative execution strategies
-- Can run experiments with real workflows, not simulations
-- Zero dependencies enable easy modification and redistribution
-- Example: Testing new pattern-matching algorithms for nested data structures
+# Comparison with Existing Tools
 
-**For rapid prototyping:**
-- Need **working code** to process data batches (10-100 items) without infrastructure setup
-- Can prototype data pipelines, test with real data, then decide if production system needed
-- Example: Processing variable-schema API responses during proof-of-concept phase
+| Feature | Apache Airflow / Prefect | Common Workflow Language (CWL) | **ParcelFlow** |
+| :--- | :--- | :--- | :--- |
+| **Primary Goal** | Production Reliability | Interoperability/Reproducibility | **Education & Prototyping** |
+| **Setup Time** | Hours (DB, Queue, Worker) | Minutes (Runner installation) | **Seconds (Zero dependencies)** |
+| **Codebase Size** | >100,000 LOC | N/A (Specification) | **~550 LOC** |
+| **Execution Model** | Explicit DAG Objects | Explicit/Implicit DAG | **Emergent (Data-Driven)** |
+| **Student Role** | User (writes DAGs) | User (writes YAML) | **Architect (modifies Engine)** |
 
-**Why this is software, not a design pattern:**
-- Complete execution engine with clear termination semantics
-- Error handling, logging, and debugging support
-- Command-line interface for running workflows
-- Example workflows demonstrating real use cases
-- Can process actual data and produce real results
+In a classroom setting, Airflow teaches students *how to use a specific tool*. ParcelFlow teaches students *how workflow engines work*.
 
-**NOT intended for:**
-- Production systems requiring monitoring, fault tolerance, distributed execution (use Airflow/Prefect)
-- Workflows with thousands of concurrent tasks
-- Mission-critical applications requiring high availability
+# Pedagogical Design Features
 
-## Why Not Just Use Existing Tools?
+## 1. Zero-Dependency "One File" Architecture
+The core logic resides entirely in standard Python. This ensures that the barrier to entry is zero: any student with Python installed can clone and run the engine. There are no "black boxes" hidden in third-party libraries.
 
-ParcelFlow addresses a specific niche that existing tools don't serve well:
-
-**Existing heavyweight orchestrators** (Airflow, Prefect, Nextflow) are designed for production workflows with hundreds of tasks and require significant infrastructure. They excel at scale but have steep learning curves and operational overhead that makes them impractical for teaching or rapid prototyping.
-
-**Existing lightweight tools** (CWL, Luigi) are simpler but still require understanding DAG construction and scatter/gather declarations. For teaching purposes, students must learn both the tool's syntax and the underlying workflow concepts simultaneously.
-
-**ParcelFlow's design choices:**
-- **Minimal implementation** (547 LOC) allows students to read and understand the entire engine
-- **Zero external dependencies** in reference implementation enables easy modification for research
-- **Pattern-based array processing** demonstrates scatter/gather without explicit declarations
-- **Not for production scale** - deliberately trades features for simplicity
-
-The workflow engine's pattern matching and state management add computational overhead compared to direct Python loops, but absolute execution time remains low: processing 100 items completes in 2.3ms on modest hardware (Apple M1). This performance profile is appropriate for the target use case—teaching workflow concepts and prototyping with datasets of 10-100 items where code clarity matters more than execution speed.
-
-# Key Features
-
-## 1. Data-Driven Execution
-
-Nodes declare required data; execution order emerges from availability:
-
+## 2. Emergent Graph Construction
+Instead of declaring a graph object (like `dag = DAG()`), students define nodes with requirements:
 ```python
-class ValidateNode(BaseNode):
+# Student defines what data is NEEDED, not what node runs PREVIOUSLY
+class ProcessNode(BaseNode):
     def __init__(self):
-        super().__init__(
-            requires=["request_data"],     # What I need
-            outputs=["validation_result"]   # What I produce
-        )
+        super().__init__(requires=["raw_data"], outputs=["clean_data"])
 ```
+The engine resolves the graph at runtime. This forces students to think in terms of **data availability**, a critical concept in distributed systems and functional reactive programming.
 
-No connections, no predecessors, no DAG definition—only data requirements.
+## 3. The "Scatter" Pattern as a primitive
+ParcelFlow implements array processing via pattern matching (`user` matches `user[0]`, `user[1]`, etc.). This provides a concrete implementation of the "Map" or "Scatter" operation found in MapReduce and scientific workflows, demystifying how big data systems parallelize work.
 
-## 2. Automatic Array Processing
+## 4. Strict "Zip" Semantics for Multi-Array Inputs
+To avoid ambiguity when a node requires multiple arrays (e.g., `A` and `B`), the engine implements a strict **Zip/Intersection strategy**. The node executes `min(len(A), len(B))` times, matching `A[i]` with `B[i]`. This provides a deterministic behavior suitable for classroom demonstration, avoiding the complexity of Cartesian products often found in more advanced systems.
 
-Pattern matching eliminates explicit loops for a specific use case:
+# Educational usage
 
-```python
-# Node declares: requires=["user"]
-# Engine finds: user[0], user[1], user[2]
-# Result: Node runs 3 times automatically—once per index
-```
+The repository includes a **Jupyter Notebook Laboratory** (`education/`) that guides students through:
+1.  **Concept Walkthrough**: Interactive visualization of how data tokens ("parcels") trigger node execution.
+2.  **Lab Exercises**: Structural challenges where students must fix broken schedulers or implement custom node logic to pass unit tests.
 
-This is similar to scatter/gather in CWL or Nextflow, but implemented purely through data availability checking rather than explicit scatter declarations. For simple array processing workflows, this reduces boilerplate code, though with performance overhead that limits practical use to small datasets.
+# Limitations
 
-## 3. Minimal Dependencies
-
-The reference Python implementation requires only Python 3.8+ with **zero external dependencies**. No pip install, no infrastructure, no configuration files.
-
-This design choice prioritizes:
-- **Educational accessibility** - Students can run code immediately
-- **Research portability** - Easy to modify and redistribute
-- **Conceptual clarity** - No framework abstractions to learn
-
-The production TypeScript implementation (deployed at Key Search AG) adds dependencies for real-world requirements (async execution, persistence, UI), demonstrating how the core paradigm scales when needed.
-
-## 4. Clear Semantics
-
-Formal execution rules ensure predictable behavior:
-- State = set of available parcels
-- Node runs when all required parcels exist
-- Workflow terminates on success (response parcel) or deadlock (no runnable nodes)
-
-## 5. Production-Validated
-
-TypeScript implementation deployed at Key Search AG (currently undergoing formal case study evaluation) demonstrates real-world viability:
-- 50-200 workflows processed daily
-- 5-20 nodes per workflow
-- 10-100 array items typical
-- Async/await for concurrent I/O operations
-- Case study results pending publication (2025)
-
-# Research Enablement
-
-ParcelFlow enables research in several areas:
-
-1. **Alternative execution models**: The separation of data dependencies from execution strategy allows researchers to experiment with different schedulers (sequential, concurrent, distributed) without changing workflow definitions.
-
-2. **Pattern matching algorithms**: The array spreading mechanism opens questions about generalizing to complex data structures (trees, graphs, nested arrays).
-
-3. **Workflow composition**: How can data-driven workflows be composed hierarchically? Can workflows themselves be data?
-
-4. **AI agent integration**: How does the declarative model integrate with agent-based systems that have unpredictable execution patterns?
-
-5. **Formal verification**: The clear semantics enable proving workflow properties like termination, determinism, and data lineage.
-
-The minimal codebase makes ParcelFlow an ideal platform for teaching these concepts and rapid experimentation.
-
-# Comparison with Related Work
-
-**Scientific workflow systems** like Nextflow [@ditommaso2017nextflow], Snakemake [@koster2012snakemake], CWL [@amstutz2016common], Swift/T [@wozniak2013swift], and Pegasus [@deelman2015pegasus] provide scatter/gather for array processing but require explicit declarations. ParcelFlow's pattern matching is implicit and automatic.
-
-**DAG orchestrators** like Airflow [@airflow] and Prefect [@prefect] require explicit dependency graphs. ParcelFlow lets structure emerge from data availability, reducing cognitive load for simple workflows.
-
-**Dataflow systems** like Apache Beam [@beam] target large-scale distributed processing. ParcelFlow prioritizes simplicity for SME-scale workflows (10-100 items) over massive parallelism (TB+ datasets).
-
-**Reactive streams** like RxJS [@rxjs] use push-based observable streams for continuous data. ParcelFlow uses pull-based discrete steps for batch-oriented tasks.
-
-# Usage Examples
-
-ParcelFlow is executable software with practical applications. Concrete examples demonstrating its implementation:
-
-## Basic Array Processing
-
-```python
-from workflow_engine import WorkflowEngine
-from nodes import ArraySpreadNode, ProcessItemNode, CollectNode
-
-nodes = [
-    ArraySpreadNode("spread", "input", "item"),
-    ProcessItemNode("process", "item", "processed"),
-    CollectNode("collect", "processed", "result", "item_meta")
-]
-
-engine = WorkflowEngine()
-result = engine.execute_workflow(nodes, {"input": ["a", "b", "c"]})
-# Result: {"result": ["PROCESSED: A", "PROCESSED: B", "PROCESSED: C"]}
-```
-
-## Educational Use
-
-Students implement custom nodes as lab exercises:
-
-```python
-class MyCustomNode(BaseNode):
-    def __init__(self):
-        super().__init__(requires=["data"], outputs=["result"])
-    
-    def run(self, parcels, index=None):
-        # Student implements their logic here
-        return {"result": transform(parcels["data"].value)}
-```
-
-The entire engine is simple enough to understand, debug, and extend—unlike heavyweight systems where the orchestration layer is opaque.
-
-# Limitations and Future Work
-
-**Current limitations:**
-- Single-threaded Python (reference implementation only)
-- In-memory parcel storage (not suitable for GB+ datasets)
-- Flat array processing (nested structures require manual handling)
-- No native conditional branching or arbitrary loops
-- Performance optimized for clarity over speed (suitable for 10-100 items; larger datasets should use production orchestrators)
-
-**Future work:**
-- Concurrent Python variant using asyncio
-- Enhanced pattern matching for nested data structures
-- Visual workflow designer (Python port of TypeScript version)
-- Conditional execution support
-- Distributed state management for scaled deployments
+As an educational reference implementation:
+*   **Sequential Execution**: By default, the Python implementation runs locally and sequentially (even conceptually parallel tasks) to ensure logs are readable and deterministic for students.
+*   **In-Memory State**: State is lost if the process crashes, simplifying the code (no database code cluttering the scheduler logic).
+*   **Performance**: While efficient for small batches (10-100 items), it is not optimized for massive scale.
 
 # Acknowledgements
 
-We thank the early adopters who provided feedback on the system design and validated the production deployment at Key Search AG.
+We acknowledge the feedback from early student testers who helped refine the API to be more intuitive for complete beginners.
 
 # References

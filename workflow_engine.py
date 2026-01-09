@@ -180,27 +180,39 @@ class WorkflowEngine:
         Example: If node requires ["user"] and parcels contain "user[0]", "user[1]", "user[2]",
         this returns [0, 1, 2].
         """
-        indices = set()
+        # Strict Zip (Intersection) Strategy
+        # We only run for an index if ALL required inputs define that index.
+        # This acts like python's zip(), stopping at the shortest array.
+        
+        common_indices = None
         
         for required in requires:
-            # Skip if the exact parcel exists (not indexed)
+            # Skip if the exact parcel exists (not indexed) - it's a broadcast/constant
             if required in parcels:
                 continue
             
-            # Look for indexed versions
+            # Find all indices available for this specific requirement
+            current_requirement_indices = set()
+            prefix = f"{required}["
+            
             for parcel_name in parcels.keys():
-                # Match pattern: required_name[index]
-                if parcel_name.startswith(f"{required}[") and parcel_name.endswith("]"):
+                if parcel_name.startswith(prefix) and parcel_name.endswith("]"):
                     try:
-                        # Extract the index
-                        index_str = parcel_name[len(required)+1:-1]
-                        index = int(index_str)
-                        indices.add(index)
+                        index = int(parcel_name[len(prefix):-1])
+                        current_requirement_indices.add(index)
                     except ValueError:
-                        # Not a valid integer index, skip
                         continue
+            
+            # Intersection: The index must exist for ALL indexed requirements
+            if common_indices is None:
+                common_indices = current_requirement_indices
+            else:
+                common_indices.intersection_update(current_requirement_indices)
         
-        return sorted(list(indices))
+        if common_indices is None:
+            return []
+            
+        return sorted(list(common_indices))
     
     def print_parcels(self):
         """Print all current parcels in a nice format."""
