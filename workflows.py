@@ -1,8 +1,8 @@
 """
-Example Workflows - Demonstrating the parcel-based execution paradigm.
+Example workflows, from a simple linear chain to array spreading (scatter/gather).
 
-These workflows show the progression from simple linear chains to complex
-parallel processing using array spreading.
+These build up the data-driven model: the engine runs each node when its required
+parcels are available, so execution order emerges from data rather than wiring.
 """
 
 from typing import List, Dict, Any
@@ -15,11 +15,11 @@ from nodes import (
 
 def create_simple_workflow() -> List[BaseNode]:
     """
-    Workflow 1: Simple Linear Chain
-    
-    request → validate → transform → response
-    
-    This demonstrates basic parcel flow and node dependencies.
+    Workflow 1: simple linear chain.
+
+    request -> validate -> transform -> response
+
+    Demonstrates basic parcel flow and how each node waits for its dependency.
     """
     return [
         RequestNode("request"),
@@ -29,14 +29,16 @@ def create_simple_workflow() -> List[BaseNode]:
     ]
 
 
-def create_parallel_workflow() -> List[BaseNode]:
+def create_independent_workflow() -> List[BaseNode]:
     """
-    Workflow 2: Parallel Processing
-    
-    request → [validate, log] → transform → response
-    
-    This shows how multiple nodes can run independently when data is available.
-    Both validate and log nodes can run as soon as request_data is available.
+    Workflow 2: independent branches.
+
+    request -> [validate, log] -> transform -> response
+
+    Both validate and log depend only on request_data, so once it exists they are
+    both eligible to run in the same pass. The engine runs them sequentially, but
+    neither depends on the other -- this is where actual concurrency could be added
+    (see the capstone exercise).
     """
     return [
         RequestNode("request"),
@@ -49,13 +51,13 @@ def create_parallel_workflow() -> List[BaseNode]:
 
 def create_array_workflow() -> List[BaseNode]:
     """
-    Workflow 3: Array Spreading (The Key Demo)
-    
-    request → array-spread → [process-item] → collect → response
-    
-    This demonstrates the core paradigm - array spreading creates parallel work.
-    The ProcessItemNode will run multiple times, once for each array item,
-    without any explicit loops or coordination.
+    Workflow 3: array spreading (scatter/gather).
+
+    request -> array-spread -> [process-item per index] -> collect -> response
+
+    ArraySpreadNode emits one indexed parcel per item; ProcessItemNode then runs
+    once per index with no explicit loop in its own code. The per-item work is
+    independent (the structure of a map), executed sequentially here.
     """
     return [
         RequestNode("request"),
@@ -67,49 +69,47 @@ def create_array_workflow() -> List[BaseNode]:
 
 
 def get_workflow_data(workflow_name: str) -> Dict[str, Any]:
-    """Get sample data for each workflow."""
-    
+    """Get sample input data for each workflow."""
+
     if workflow_name == "simple":
         return {"request_data": "Hello, World!"}
-    
-    elif workflow_name == "parallel":
-        return {"request_data": "Parallel processing test"}
-    
+
+    elif workflow_name == "independent":
+        return {"request_data": "Independent-branch test"}
+
     elif workflow_name == "array":
         return {"request_data": ["alice", "bob", "charlie", "diana"]}
-    
+
     else:
         raise ValueError(f"Unknown workflow: {workflow_name}")
 
 
 def get_workflow_description(workflow_name: str) -> str:
-    """Get a description of what each workflow demonstrates."""
-    
+    """Get a short description of what each workflow demonstrates."""
+
     descriptions = {
         "simple": """
-🔄 Simple Linear Chain
-   Demonstrates basic parcel flow and node dependencies.
-   Shows how nodes wait for their required data to become available.
+Simple linear chain.
+   Basic parcel flow and node dependencies. Each node waits for the parcel
+   produced by the previous one.
         """,
-        
-        "parallel": """
-⚡ Parallel Processing
-   Shows how multiple nodes can run independently when data is available.
-   Both validate and log nodes run as soon as request_data is available.
+
+        "independent": """
+Independent branches.
+   validate and log both depend only on request_data, so both become eligible
+   as soon as it exists. The engine runs them in one pass (sequentially).
         """,
-        
+
         "array": """
-🚀 Array Spreading (The Key Demo)
-   Demonstrates the core paradigm - array spreading creates parallel work.
-   The ProcessItemNode runs multiple times, once for each array item,
-   without any explicit loops or coordination.
-   This is the essence of the reactive data flow system!
+Array spreading (scatter/gather).
+   A list is spread into indexed parcels; the per-item node runs once per index
+   with no explicit loop, then a collect node gathers the results back.
         """
     }
-    
+
     return descriptions.get(workflow_name, "Unknown workflow")
 
 
 def list_workflows() -> List[str]:
-    """Get list of available workflows."""
-    return ["simple", "parallel", "array"]
+    """Return the list of available workflow names."""
+    return ["simple", "independent", "array"]

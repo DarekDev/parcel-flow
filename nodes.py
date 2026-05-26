@@ -65,7 +65,8 @@ class TransformNode(BaseNode):
 
 
 class LogNode(BaseNode):
-    """Logs data for debugging - runs in parallel with other nodes."""
+    """Logs data for debugging. Depends only on request_data, so it is eligible
+    to run alongside other nodes that share that single dependency."""
     
     def __init__(self, node_id: str = "log"):
         super().__init__(node_id, requires=["request_data"], outputs=["log_entry"])
@@ -84,10 +85,12 @@ class LogNode(BaseNode):
 
 class ArraySpreadNode(BaseNode):
     """
-    The key node for demonstrating parallelism!
-    
-    Takes an array and spreads it into indexed parcels.
-    This creates parallel work - other nodes can process each item independently.
+    Spreads an array into indexed parcels (the "scatter" step).
+
+    Given a list, it emits one indexed parcel per item (e.g. user[0], user[1]).
+    Downstream nodes that require the prefix then run once per item. Each item is
+    independent, so this is the data-parallel structure of a map -- though this
+    engine executes those runs sequentially.
     """
     
     def __init__(self, node_id: str = "array_spread", input_parcel: str = "users", output_prefix: str = "user"):
@@ -101,9 +104,7 @@ class ArraySpreadNode(BaseNode):
         if not isinstance(input_data, list):
             raise ValueError(f"Input parcel '{self.input_parcel}' must be a list")
         
-        # Create indexed parcels for each array item
-        # This is where the magic happens - we create multiple parcels
-        # that other nodes can process in parallel
+        # Emit one indexed parcel per array item.
         result = {}
         for i, item in enumerate(input_data):
             parcel_name = f"{self.output_prefix}[{i}]"
@@ -121,13 +122,11 @@ class ArraySpreadNode(BaseNode):
 
 class ProcessItemNode(BaseNode):
     """
-    Processes individual array items.
-    
-    This node will run multiple times - once for each item in the array!
-    The engine calls this node once per index automatically.
-    
-    Key insight: Node just declares requires=["user"] (no index!).
-    The engine sees "user[0]", "user[1]", etc. and runs this node for each.
+    Processes individual array items (the per-item "map" step).
+
+    The node declares requires=["user"] with no index. When the store holds
+    user[0], user[1], ..., the engine runs this node once per index and passes
+    the index in. The node never writes a loop over the array itself.
     """
     
     def __init__(self, node_id: str = "process_item", input_prefix: str = "user", output_prefix: str = "processed"):

@@ -204,6 +204,36 @@ class TestWorkflowEngine(unittest.TestCase):
         # Node should run exactly once
         self.assertEqual(counter.run_count, 1)
     
+    def test_deadlock_detected_for_unsatisfiable_node(self):
+        """A node whose requirement is never produced is reported as deadlocked."""
+        nodes = [SimpleNode("stuck", "never_produced", "out")]
+        self.engine.execute_workflow(nodes, {})
+
+        self.assertEqual(len(self.engine.unrun_nodes), 1)
+        self.assertIs(self.engine.unrun_nodes[0], nodes[0])
+        log = self.engine.get_execution_log()
+        self.assertTrue(any("DEADLOCK" in entry for entry in log))
+        self.assertTrue(any("never_produced" in entry for entry in log))
+
+    def test_no_deadlock_when_all_nodes_run(self):
+        """A workflow where every node runs reports no unrun nodes."""
+        nodes = [SimpleNode("a", "x", "y"), SimpleNode("b", "y", "z")]
+        self.engine.execute_workflow(nodes, {"x": "test"})
+
+        self.assertEqual(self.engine.unrun_nodes, [])
+        log = self.engine.get_execution_log()
+        self.assertFalse(any("DEADLOCK" in entry for entry in log))
+
+    def test_partial_deadlock_runs_satisfiable_nodes(self):
+        """Satisfiable nodes still run even when another node is deadlocked."""
+        runnable = SimpleNode("ok", "x", "y")
+        stuck = SimpleNode("stuck", "missing", "z")
+        result = self.engine.execute_workflow([runnable, stuck], {"x": "test"})
+
+        self.assertIn("y", result)
+        self.assertNotIn("z", result)
+        self.assertEqual([n.node_id for n in self.engine.unrun_nodes], ["stuck"])
+
     def test_execution_log_created(self):
         """Test execution log is populated."""
         nodes = [SimpleNode("node1", "a", "b")]

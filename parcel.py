@@ -1,8 +1,9 @@
 """
-Parcel - The fundamental data unit in the Matrix execution system.
+Parcel: the fundamental data unit in ParcelFlow.
 
-A Parcel represents a piece of data that flows through the workflow.
-Nodes consume parcels and produce new parcels, creating a reactive data flow.
+A parcel is a named piece of data flowing through the workflow. Nodes consume
+parcels and produce new ones, and the presence of a parcel is what makes a
+downstream node eligible to run.
 """
 
 from dataclasses import dataclass
