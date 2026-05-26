@@ -33,9 +33,9 @@ After the included material, students will be able to:
   (~45 min read) covering the model, the engine loop, deadlock, and scatter/gather.
 - **[01_concepts_walkthrough.ipynb](education/01_concepts_walkthrough.ipynb)** — a
   guided tour of the engine: Parcels, Nodes, the scheduler loop, implicit chaining.
-- **[03_scatter_gather_lab.ipynb](education/03_scatter_gather_lab.ipynb)** — spreading
+- **[02_scatter_gather_lab.ipynb](education/02_scatter_gather_lab.ipynb)** — spreading
   a list into per-item work, gathering results, and zip semantics, with an exercise.
-- **[02_student_lab.ipynb](education/02_student_lab.ipynb)** — hands-on exercises:
+- **[03_student_lab.ipynb](education/03_student_lab.ipynb)** — hands-on exercises:
   1. Implement a `SplitterNode`.
   2. Diagnose and fix a deadlock.
   3. *(Capstone)* Make the independent per-item work run concurrently.
@@ -61,7 +61,7 @@ python run_tests.py
 ### What the logs show
 
 The engine prints each pass and the parcels it produces. For `python main.py simple`,
-the core of the log is:
+the core of the log is (abbreviated):
 
 ```text
 Starting workflow with 4 node(s)

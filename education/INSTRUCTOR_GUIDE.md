@@ -31,11 +31,11 @@ Scope it as "read and modify a tiny scheduler," not "learn workflow engineering.
 |---|---|---|
 | 0–15 | Lecture: control flow vs data flow; the two nouns (Parcel, Node) | `LECTURE_NOTES.md` §1–2 |
 | 15–35 | Walk the engine loop live; run Module 1 | `01_concepts_walkthrough.ipynb`, `workflow_engine.py` |
-| 35–55 | Scatter/gather; run Module 3 demo cells | `03_scatter_gather_lab.ipynb`, `LECTURE_NOTES.md` §5 |
-| 55–80 | Students do Module 2 Exercises 1–2 | `02_student_lab.ipynb` |
+| 35–55 | Scatter/gather; run Module 2 demo cells | `02_scatter_gather_lab.ipynb`, `LECTURE_NOTES.md` §5 |
+| 55–80 | Students do Module 3 Exercises 1–2 | `03_student_lab.ipynb` |
 | 80–90 | Debrief deadlock; assign capstone as homework | `LECTURE_NOTES.md` §4 |
 
-For a 60-minute version, drop Module 3 to a demo and assign it as reading. For a
+For a 60-minute version, drop Module 2 to a demo and assign it as reading. For a
 two-session version, give the capstone (Exercise 3) its own slot and discuss the
 structure-vs-execution distinction at length.
 
@@ -45,11 +45,11 @@ structure-vs-execution distinction at length.
    directly when Module 1 runs nodes with partial vs full data.
 2. **Read and explain the scheduler loop.** — Module 1 §2–3 alongside
    `workflow_engine.py`.
-3. **Implement nodes that fit the model.** — Module 2 Exercise 1; Module 3 exercise.
-4. **Diagnose a data-flow deadlock.** — Module 2 Exercise 2, using the engine's
+3. **Implement nodes that fit the model.** — Module 3 Exercise 1; Module 2 exercise.
+4. **Diagnose a data-flow deadlock.** — Module 3 Exercise 2, using the engine's
    end-of-run deadlock report.
-5. **Explain scatter/gather and zip semantics.** — Module 3.
-6. **Separate the *structure* of parallel work from its *execution*.** — Module 2
+5. **Explain scatter/gather and zip semantics.** — Module 2.
+6. **Separate the *structure* of parallel work from its *execution*.** — Module 3
    capstone (Exercise 3).
 
 ## Common student difficulties

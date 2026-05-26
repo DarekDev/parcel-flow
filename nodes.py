@@ -130,7 +130,7 @@ class ProcessItemNode(BaseNode):
     """
     
     def __init__(self, node_id: str = "process_item", input_prefix: str = "user", output_prefix: str = "processed"):
-        # Note: We just declare the prefix, not specific indices!
+        # Declare the prefix only, not specific indices; the engine supplies them.
         super().__init__(node_id, requires=[input_prefix], outputs=[output_prefix])
         self.input_prefix = input_prefix
         self.output_prefix = output_prefix
@@ -167,10 +167,11 @@ class ProcessItemNode(BaseNode):
 
 class CollectNode(BaseNode):
     """
-    Collects processed items back into a single array.
-    
-    Key insight: Requires the metadata parcel to know how many items to expect.
-    Only runs when ALL indexed parcels are available.
+    Collects processed items back into a single array (the "gather" step).
+
+    Requires the metadata parcel to learn how many items to expect, and overrides
+    can_run so it only fires once every indexed parcel is present. This override is
+    the one place a node reaches beyond the plain requires/outputs contract.
     """
     
     def __init__(self, node_id: str = "collect", input_prefix: str = "processed", 

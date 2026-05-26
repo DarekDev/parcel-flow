@@ -89,8 +89,8 @@ To avoid ambiguity when a node requires multiple arrays (e.g., `A` and `B`), the
 The `education/` folder contains the teaching material:
 1.  **Lecture notes** (`LECTURE_NOTES.md`): a self-contained written lecture on the data-flow model, the engine loop, deadlock, and scatter/gather.
 2.  **Concept walkthrough** (`01_concepts_walkthrough.ipynb`): a guided tour showing how parcels trigger node execution and how chaining emerges from data.
-3.  **Scatter/gather lab** (`03_scatter_gather_lab.ipynb`): the array pattern and zip semantics, with an exercise.
-4.  **Student lab** (`02_student_lab.ipynb`): exercises in which students implement a node, diagnose a deadlock, and (as a capstone) make the independent per-item work run concurrently. Each exercise has an assertion-based test cell.
+3.  **Scatter/gather lab** (`02_scatter_gather_lab.ipynb`): the array pattern and zip semantics, with an exercise.
+4.  **Student lab** (`03_student_lab.ipynb`): exercises in which students implement a node, diagnose a deadlock, and (as a capstone) make the independent per-item work run concurrently. Each exercise has an assertion-based test cell.
 5.  **Instructor guide** (`INSTRUCTOR_GUIDE.md`) and worked **solutions** (`solutions/`).
 
 The engine itself ships with a unit-test suite (`python run_tests.py`) that instructors can run to confirm the engine behaves as described before class.

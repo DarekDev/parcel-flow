@@ -5,7 +5,7 @@ Keep this file away from students until after they attempt the work.
 
 All solutions have been checked against the test cells in the notebooks.
 
-## Module 2, Exercise 1 — SplitterNode
+## Module 3, Exercise 1 — SplitterNode
 
 ```python
 class SplitterNode(BaseNode):
@@ -21,7 +21,7 @@ class SplitterNode(BaseNode):
 written for a single sentence; the engine would run it once per index if `sentence`
 were itself spread into `sentence[0]`, `sentence[1]`, ...
 
-## Module 2, Exercise 2 — fixing the deadlock
+## Module 3, Exercise 2 — fixing the deadlock
 
 `BadNode` requires `step_one`, but `StartNode` produces `step1`. Change the requires
 list to match the parcel that is actually produced:
@@ -39,7 +39,7 @@ the node simply never becomes ready, so the work silently never happens. ParcelF
 surfaces this with its end-of-run `DEADLOCK: ...` report, which names the parcel the
 node was waiting for.
 
-## Module 2, Exercise 3 (capstone) — concurrent per-item processing
+## Module 3, Exercise 3 (capstone) — concurrent per-item processing
 
 ```python
 from concurrent.futures import ThreadPoolExecutor
@@ -56,7 +56,7 @@ concurrency safe here, and it is exactly the structure the scatter step produces
 The engine itself remains sequential; this exercise parallelizes the *work*, not the
 engine.
 
-## Module 3 — DoublerNode
+## Module 2 — DoublerNode
 
 ```python
 class DoublerNode(BaseNode):

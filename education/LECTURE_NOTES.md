@@ -160,6 +160,14 @@ a deliberate, predictable choice over the alternative (a Cartesian product), and
 good prompt for a design discussion: when would you want zip semantics, and when
 would you want the cross product?
 
+One honest seam is worth pointing students to: the gather step (`CollectNode`)
+cannot be expressed by `requires`/`outputs` alone, because "wait until *all* of
+`processed[0..n]` exist" depends on a count it only learns at runtime. It therefore
+overrides `can_run` to inspect the metadata parcel. This is the single place a node
+reaches beyond the clean declarative contract — a good discussion point about where a
+minimal model's abstraction stops fitting and why real engines need richer readiness
+rules.
+
 ---
 
 ## 6. Where this sits relative to real systems
@@ -200,5 +208,5 @@ familiar and only the operational machinery is new.
   actually understand it.
 
 Continue with the notebooks: `01_concepts_walkthrough` to see the loop run,
-`03_scatter_gather_lab` for the array pattern, and `02_student_lab` to modify the
+`02_scatter_gather_lab` for the array pattern, and `03_student_lab` to modify the
 engine yourself.
