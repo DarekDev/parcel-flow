@@ -13,7 +13,7 @@ authors:
 affiliations:
  - name: Technology Department, Key Search AG, Switzerland
    index: 1
-date: 4 November 2024
+date: 26 May 2026
 bibliography: paper.bib
 ---
 
@@ -28,10 +28,10 @@ The software demonstrates core orchestration patterns—specifically **data-driv
 ## The Educational Gap
 
 Teaching workflow orchestration and distributed computing concepts presents a specific challenge:
-1.  **Production tools are too complex**: Systems like Apache Airflow \citep{airflow} or Prefect \citep{prefect} require significant infrastructure (databases, message queues), complex configuration, and steep learning curves. While scientific workflow systems like Nextflow [@ditommaso2017nextflow] and Swift/T [@wozniak2013swift] handle massive parallelism effectively, they are designed for high-performance computing (HPC) environments. Conversely, industry standard orchestrators like Apache Airflow [@airflow] and Prefect [@prefect] focus on production reliability. Both categories require significant infrastructure.
+1.  **Production tools are too complex**: Industry orchestrators like Apache Airflow [@airflow] and Prefect [@prefect] require significant infrastructure (databases, message queues), complex configuration, and steep learning curves, because they prioritise production reliability. Scientific workflow systems like Nextflow [@ditommaso2017nextflow], Swift/T [@wozniak2013swift], Snakemake [@koster2012snakemake], and Pegasus [@deelman2015pegasus] handle large parallel dataflow graphs effectively, but are designed for high-performance computing (HPC) environments. Both categories require infrastructure that obscures the underlying idea.
 2.  **Toy examples are too abstract**: Pseudocode or simple scripts fail to demonstrate the real challenges of state management, dependency resolution, and execution semantics in a graph.
 
-Educators need a **"middle ground" tool**: a functioning, executable workflow engine that is simple enough to be studied as a "white box" but complex enough to exhibit real orchestration behaviors (DAG resolution, parallelism, error propagation).
+Educators need a **"middle ground" tool**: a functioning, executable workflow engine that is simple enough to be studied as a "white box" but complex enough to exhibit real orchestration behaviours (dependency resolution, deadlock, scatter/gather, error propagation).
 
 ## A "Glass Box" for Orchestration
 
@@ -44,11 +44,12 @@ The novelty of ParcelFlow lies not in a new computational paradigm, but in its *
 
 # Learning Objectives
 
-ParcelFlow is designed to support a "Systems & Architecture" module where students:
-1.  **Differentiate** between Control-Flow (scripted) and Data-Flow (reactive) execution models.
-2.  **Implement** the "Scatter/Gather" pattern, understanding how single-item logic scales to arrays without explicit loops.
-3.  **Debug** dependency graphs, identifying cycles and "dead" branches where data is never produced.
-4.  **Critique** scheduler designs, comparing the trade-offs of eager vs. lazy execution.
+ParcelFlow is designed to support a single lab or lecture within a systems,
+distributed-computing, or software-architecture course, in which students:
+1.  **Differentiate** between control-flow (scripted) and data-flow (reactive) execution models.
+2.  **Implement** the scatter/gather pattern, understanding how single-item logic scales to arrays without explicit loops.
+3.  **Diagnose** a data-flow deadlock: a "dead" branch where a node waits on a parcel that no node ever produces. (Detecting true cycles before execution is a natural extension exercise.)
+4.  **Distinguish** the *structure* of parallel work from its *execution*, and **critique** scheduler trade-offs such as eager vs. lazy evaluation.
 
 # Comparison with Existing Tools
 
@@ -75,19 +76,24 @@ class ProcessNode(BaseNode):
     def __init__(self):
         super().__init__(requires=["raw_data"], outputs=["clean_data"])
 ```
-The engine resolves the graph at runtime. This forces students to think in terms of **data availability**, a critical concept in distributed systems and functional reactive programming.
+The engine resolves the graph at runtime. This forces students to think in terms of **data availability**, a concept central to distributed systems and to reactive programming, the model underlying streaming systems such as Apache Beam [@beam] and reactive libraries such as RxJS [@rxjs].
 
 ## 3. The "Scatter" Pattern as a primitive
-ParcelFlow implements array processing via pattern matching (`user` matches `user[0]`, `user[1]`, etc.). This provides a concrete implementation of the "Map" or "Scatter" operation found in MapReduce and scientific workflows, demystifying how big data systems parallelize work.
+ParcelFlow implements array processing via pattern matching (`user` matches `user[0]`, `user[1]`, etc.). This gives a concrete implementation of the "map" or "scatter" operation found in MapReduce and scientific workflows. Crucially, the per-item runs are *independent* — that independence is the logical structure such systems parallelise — but ParcelFlow itself executes them sequentially (see Limitations). The distinction between the parallel *structure* of the work and its sequential *execution* is made an explicit teaching point rather than glossed over.
 
 ## 4. Strict "Zip" Semantics for Multi-Array Inputs
 To avoid ambiguity when a node requires multiple arrays (e.g., `A` and `B`), the engine implements a strict **Zip/Intersection strategy**. The node executes `min(len(A), len(B))` times, matching `A[i]` with `B[i]`. This provides a deterministic behavior suitable for classroom demonstration, avoiding the complexity of Cartesian products often found in more advanced systems.
 
 # Educational usage
 
-The repository includes a **Jupyter Notebook Laboratory** (`education/`) that guides students through:
-1.  **Concept Walkthrough**: Interactive visualization of how data tokens ("parcels") trigger node execution.
-2.  **Lab Exercises**: Structural challenges where students must fix broken schedulers or implement custom node logic to pass unit tests.
+The `education/` folder contains the teaching material:
+1.  **Lecture notes** (`LECTURE_NOTES.md`): a self-contained written lecture on the data-flow model, the engine loop, deadlock, and scatter/gather.
+2.  **Concept walkthrough** (`01_concepts_walkthrough.ipynb`): a guided tour showing how parcels trigger node execution and how chaining emerges from data.
+3.  **Scatter/gather lab** (`03_scatter_gather_lab.ipynb`): the array pattern and zip semantics, with an exercise.
+4.  **Student lab** (`02_student_lab.ipynb`): exercises in which students implement a node, diagnose a deadlock, and (as a capstone) make the independent per-item work run concurrently. Each exercise has an assertion-based test cell.
+5.  **Instructor guide** (`INSTRUCTOR_GUIDE.md`) and worked **solutions** (`solutions/`).
+
+The engine itself ships with a unit-test suite (`python run_tests.py`) that instructors can run to confirm the engine behaves as described before class.
 
 # Limitations
 
@@ -95,9 +101,5 @@ As an educational reference implementation:
 *   **Sequential Execution**: By default, the Python implementation runs locally and sequentially (even conceptually parallel tasks) to ensure logs are readable and deterministic for students.
 *   **In-Memory State**: State is lost if the process crashes, simplifying the code (no database code cluttering the scheduler logic).
 *   **Performance**: While efficient for small batches (10-100 items), it is not optimized for massive scale.
-
-# Acknowledgements
-
-We acknowledge the feedback from early student testers who helped refine the API to be more intuitive for complete beginners.
 
 # References
